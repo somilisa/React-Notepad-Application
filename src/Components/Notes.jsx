@@ -1,11 +1,17 @@
 import React from "react";
-import { data } from "../data";
-const Notes = () => {
-  const [notes, setNotes] = React.useState(data);
+import { useNoteStore } from "../App";
+
+const Notes = ({ handleNoteClick }) => {
+  const notes = useNoteStore((state) => state.notes);
+
   return (
     <div className="notes-grid">
       {notes.map((note) => (
-        <div class="notes-item" key={note.id}>
+        <div
+          className="notes-item"
+          key={note.id}
+          onClick={() => handleNoteClick(note)}
+        >
           <header>
             <button>x</button>
           </header>
