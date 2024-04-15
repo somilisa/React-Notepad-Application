@@ -14,7 +14,9 @@ let store = (set) => ({
     set((state) => ({ notes: [...state.notes, newNote] }));
   },
   noteClick: (note) => {
-    set((state) => ({ selectedNote: note }));
+    set((state) => ({
+      selectedNote: state.selectedNote === note ? null : note,
+    }));
   },
 });
 store = persist(store, { name: "note-store" });
@@ -72,12 +74,12 @@ function App() {
     setNotes(updatedNotesList);
     console.log(notes);
     reset();
-    selectedNote = null;
+    noteClick();
   };
 
   const handleCancel = () => {
     reset();
-    selectedNote = null;
+    noteClick();
   };
 
   return (
