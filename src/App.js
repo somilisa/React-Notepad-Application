@@ -1,22 +1,27 @@
-import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import Notes from "./Components/Notes.jsx";
 import { data } from "./data.js";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import "./App.css";
+import { create } from "zustand";
 
-export const useNoteStore = create((set) => ({
+let store = (set) => ({
   notes: data,
   selectedNote: null,
+
+  setNotes: (newNotes) => set({ notes: newNotes }),
   addNote: (newNote) => {
     set((state) => ({ notes: [...state.notes, newNote] }));
   },
   noteClick: (note) => {
     set((state) => ({ selectedNote: note }));
   },
-}));
+});
+store = persist(store, { name: "note-store" });
+export const useNoteStore = create(store);
 
 function App() {
-  const { register, reset, setValue, handleSubmit } = useForm({
+  const { register, reset, setValue, getValues, handleSubmit } = useForm({
     mode: "onChange",
     reValidateMode: "onChange",
   });
@@ -45,9 +50,42 @@ function App() {
     setValue("content", note.content);
   };
 
+  let selectedNote = useNoteStore((state) => state.selectedNote);
+  const setNotes = useNoteStore((state) => state.setNotes);
+
+  const handleUpdateNote = (e) => {
+    e.preventDefault();
+    if (!selectedNote) {
+      return;
+    }
+
+    const updatedNote = {
+      id: selectedNote.id,
+      title: getValues("title"),
+      content: getValues("content"),
+    };
+
+    const updatedNotesList = notes.map((note) =>
+      note.id === selectedNote.id ? updatedNote : note
+    );
+
+    setNotes(updatedNotesList);
+    console.log(notes);
+    reset();
+    selectedNote = null;
+  };
+
+  const handleCancel = () => {
+    reset();
+    selectedNote = null;
+  };
+
   return (
     <div className="app-container">
-      <form className="note-form" onSubmit={handleAddNote}>
+      <form
+        className="note-form"
+        onSubmit={selectedNote ? handleUpdateNote : handleAddNote}
+      >
         <input
           {...register("title")}
           type="text"
@@ -60,7 +98,16 @@ function App() {
           rows={10}
           required
         />
-        <button type="submit">Add Note </button>
+        {selectedNote ? (
+          <div className="edit-buttons">
+            <button type="submit">Save</button>
+            <button type="reset" onClick={handleCancel}>
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button type="submit">Add Note</button>
+        )}
       </form>
       <Notes handleNoteClick={handleNoteClick} />
     </div>
